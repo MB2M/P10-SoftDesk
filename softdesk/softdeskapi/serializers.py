@@ -1,6 +1,6 @@
 from django.db.models import fields
 from rest_framework import serializers
-from .models import Contributor, Issue, Project, User
+from .models import Comment, Contributor, Issue, Project, User
 from . import models
 
 
@@ -33,9 +33,15 @@ class ContributorSerializer(serializers.ModelSerializer):
         fields = ['user', 'project', 'permission', 'role']
 
 class IssueSerializer(serializers.ModelSerializer):
-    author =  serializers.PrimaryKeyRelatedField(many=False,  queryset=User.objects.all())
+    # author =  serializers.PrimaryKeyRelatedField(many=False,  queryset=User.objects.all())
 
     class Meta:
         model = Issue
         fields = ['title', 'description', 'tag', 'priority', 'project', 'status', 'author', 'assignee', 'created_time']
+        extra_kwargs = {'created_time': {'read_only': True}}
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['description', 'author', 'issue', 'created_time']
         extra_kwargs = {'created_time': {'read_only': True}}
