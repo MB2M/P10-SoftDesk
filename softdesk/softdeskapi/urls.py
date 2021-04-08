@@ -14,5 +14,5 @@ urlpatterns = [
     # path('users/<int:pk>/', views.UserDetail.as_view()),
     path('signup/', views.Signup.as_view()),
     # path('contributor/', views.contributor_list),
-    path('users', views.UserList.as_view())
+    # path('users', views.UserList.as_view())
 ]

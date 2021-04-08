@@ -19,8 +19,8 @@ class IsAuthorOrContributor(permissions.BasePermission):
         elif isinstance(obj, Comment):
             project = obj.issue.project
 
-        if request.method in permissions.SAFE_METHODS:
-            return Contributor.objects.filter(user=request.user, project=project).exists()
+        if request.method in permissions.SAFE_METHODS + ('POST',):
+            return Contributor.objects.filter(user=request.user.id, project=project.id).exists()
 
         # Instance must have an attribute named `owner`.
         return obj.author == request.user
