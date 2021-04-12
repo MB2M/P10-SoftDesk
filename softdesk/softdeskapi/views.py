@@ -60,42 +60,33 @@ class ProjectUserList(generics.ListCreateAPIView):
     permission_classes = [IsAuthorOrContributor]
     serializer_class = ContributorSerializer
     queryset = Project.objects.all()
+    
 
-    def get(self, request, pk):
-        try:
-            project = Project.objects.get(pk=pk)
-            self.check_object_permissions(self.request, project)
-        except Project.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        contributors = project.contributor_set.all()
-        serializer = ContributorSerializer(contributors, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        project_id = self.kwargs['pk']
+        project = generics.get_object_or_404(Project, pk=project_id)
+        self.check_object_permissions(self.request, project)
+        return project.contributor_set.all()
 
-    def post(self,request, pk, role='contributor'):
-        try:
-            project = Project.objects.get(pk=pk)
-            self.check_object_permissions(self.request, project)
-        except Project.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    def post(self, request, *args, **kwargs):
+        project_id = self.kwargs['pk']
+        project = generics.get_object_or_404(Project, pk=project_id)
+        self.check_object_permissions(self.request, project)
         self.request.data._mutable = True
         self.request.data['project'] = project.id
-        if role == 'contributor':
-            self.request.data['permission'] = "create, read"
-        else:
-            self.request.data['permission'] = "create, read, update, delete"
-        self.request.data['role'] = role
+        self.request.data['permission'] = "create, read"
+        self.request.data['role'] = 'contributor'
         self.request.data._mutable = False
-        serializer = ContributorSerializer(data=self.request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return self.create(request, *args, **kwargs)
 
 class ProjectUserDelete(generics.DestroyAPIView):
     """
     Delete a user from a project.
     """
     permission_classes = [IsAuthorOrContributor]
+    serializer_class = ProjectSerializer
+    lookup_url_kwarg = 'pk_project'
+    queryset = Project.objects.all()
 
     def get_contributor(self, pk_project, pk_user):
         try:
@@ -104,7 +95,8 @@ class ProjectUserDelete(generics.DestroyAPIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, pk_project, pk_user):
-        contributor = self.get_contributor(pk_project, pk_user)
+        project = self.get_object()
+        contributor = project.contributor_set.filter(user=pk_user)
         contributor.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -136,7 +128,7 @@ class IssueList(generics.ListCreateAPIView):
         request.data._mutable = False
         return self.create(request, *args, **kwargs)
 
-class IssueDetail(generics.UpdateAPIView, generics.DestroyAPIView):
+class IssueDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     Update or delete an issue.
     """
@@ -154,7 +146,7 @@ class IssueDetail(generics.UpdateAPIView, generics.DestroyAPIView):
 
 class CommentList(generics.ListCreateAPIView):
     """
-    List all comments of a issue, or add a new comment to the issue.
+    List all comments of an issue, or add a new comment to the issue.
     """
     permission_classes = [IsAuthorOrContributor]
     serializer_class = CommentSerializer

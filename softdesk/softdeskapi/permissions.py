@@ -1,5 +1,7 @@
-from .models import Comment, Contributor, Issue, Project
 from rest_framework import permissions
+
+from .models import Comment, Contributor, Issue, Project
+
 
 
 class IsAuthorOrContributor(permissions.BasePermission):
@@ -19,7 +21,13 @@ class IsAuthorOrContributor(permissions.BasePermission):
         elif isinstance(obj, Comment):
             project = obj.issue.project
 
-        if request.method in permissions.SAFE_METHODS + ('POST',):
+        methods = permissions.SAFE_METHODS
+
+        #Only author can add an contributor to a project
+        if view.get_view_name() != 'Project User List':
+            methods += ('POST',)
+
+        if request.method in methods:
             return Contributor.objects.filter(user=request.user.id, project=project.id).exists()
 
         # Instance must have an attribute named `owner`.

@@ -5,7 +5,6 @@ from . import models
 
 
 class ProjectSerializer(serializers.ModelSerializer):
-    # users = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     author =  serializers.PrimaryKeyRelatedField(many=False,  queryset=User.objects.all())
 
     class Meta:
@@ -31,22 +30,18 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class ContributorSerializer(serializers.ModelSerializer):
-    # user = UserSerializer()
-    # project = ProjectSerializer()
     class Meta:
         model = Contributor
         fields = ['user', 'project', 'permission', 'role']
 
 class IssueSerializer(serializers.ModelSerializer):
-    # author =  serializers.PrimaryKeyRelatedField(many=False,  queryset=User.objects.all())
-
     class Meta:
         model = Issue
-        fields = ['title', 'description', 'tag', 'priority', 'project', 'status', 'author', 'assignee', 'created_time']
+        fields = ['id', 'title', 'description', 'tag', 'priority', 'project', 'status', 'author', 'assignee', 'created_time']
         extra_kwargs = {'created_time': {'read_only': True}}
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['description', 'author', 'issue', 'created_time']
+        fields = ['id', 'description', 'author', 'issue', 'created_time']
         extra_kwargs = {'created_time': {'read_only': True}}
